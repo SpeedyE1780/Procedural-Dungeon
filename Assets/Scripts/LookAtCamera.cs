@@ -1,19 +1,15 @@
-﻿using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
+﻿using UnityEngine;
 
 public class LookAtCamera : MonoBehaviour
 {
     Transform mainCamera;
+    Quaternion initalRotation;
 
     private void Awake()
     {
         mainCamera = Camera.main.transform;
+        initalRotation = transform.rotation;
     }
 
-    private void Update()
-    {
-        Vector3 newForward = transform.position - mainCamera.position;
-        transform.forward = newForward;
-    }
+    private void LateUpdate() => transform.rotation = initalRotation * mainCamera.rotation;
 }
