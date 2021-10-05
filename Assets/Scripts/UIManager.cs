@@ -86,7 +86,7 @@ public class UIManager : MonoBehaviour
         //Move map by the player offset
         //Divide x and z to convert to pixel coordinates
         Vector2 offset = new Vector2(movement.x / 53, movement.z / 48) * RoomPixelSize;
-        Debug.Log($"M:{movement} - O:{offset / RoomPixelSize}");
+        Map.anchoredPosition = -offset;
 
         //Set map rotation to the player's rotation
         Map.transform.parent.rotation = Quaternion.Euler(0, 0, angleZ);
