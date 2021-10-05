@@ -288,7 +288,7 @@ public class DungeonGenerator : MonoBehaviour
 
     void SetStats()
     {
-        string stats = $"Generated Rooms: {generatedRooms.Count}\n Available Coordinates: {availableCoordinates.Count}";
+        string stats = $"Generated Rooms: {generatedRooms.Count}\n Available Coordinates: {availableCoordinates.Count()}";
         UIManager.Instance.SetStats(stats);
     }
 }
