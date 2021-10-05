@@ -63,7 +63,7 @@ public class MovementController : MonoBehaviour
         {
             if (Input.GetKeyDown(KeyCode.E))
             {
-                Vector3 destination = other.GetComponentInParent<PortalController>().TeleportPlayer(ref currentFloor);
+                Vector3 destination = other.GetComponentInParent<PortalController>().GetTargetPosition(ref currentFloor);
                 Vector3 offset = destination - transform.position;
                 transform.position = destination;
 

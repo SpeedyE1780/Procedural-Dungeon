@@ -1,27 +1,19 @@
-﻿using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
+﻿using UnityEngine;
 
 public class PortalController : ConnectionController
 {
-    Transform nextPortal;
-    public Vector3 GetNextPosition => nextPortal.position;
+    Vector3 targetPosition;
     bool isActive;
+    int floorIncrement;
 
-    private void Awake()
+    protected override void Awake()
     {
-        anim = GetComponent<Animator>();
-        EventManager.meshCalculated += () =>
-        {
-            if (nextPortal == null || nextPortal == transform.GetChild(0))
-            {
-                Debug.LogError("Portal Not connected");
-            }
-        };
-
+        base.Awake();
         isActive = false;
+        floorIncrement = connectionSide == ConnectionSide.Up ? 1 : -1;
     }
 
+    //Play open animation again
     private void OnEnable()
     {
         if (isActive)
@@ -34,14 +26,13 @@ public class PortalController : ConnectionController
         base.ActivateConnections();
     }
 
-    public void SetNextPosition(Transform portal)
-    {
-        nextPortal = portal;
-    }
+    //Set portal target position
+    public void SetNextPosition(Transform portal) => targetPosition = portal.position;
 
-    public Vector3 TeleportPlayer(ref int floor)
+    //Update floor and return position
+    public Vector3 GetTargetPosition(ref int floor)
     {
-        floor += connectionSide == ConnectionSide.Up ? 1 : -1;
-        return nextPortal.position;
+        floor += floorIncrement;
+        return targetPosition;
     }
 }

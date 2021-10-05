@@ -924,8 +924,8 @@ MonoBehaviour:
   DungeonParent: {fileID: 318731978}
   DungeonNavMesh: {fileID: 318731979}
   Rooms: []
-  NumberOfRooms: 250
-  BFSExpansion: 1
+  NumberOfRooms: 100
+  BFSExpansion: 0
   FrameByFrame: 1
   WaitForKeyPress: 0
 --- !u!114 &1152892106

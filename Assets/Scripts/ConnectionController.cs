@@ -6,18 +6,7 @@ public class ConnectionController : MonoBehaviour
 
     protected Animator anim;
 
-    private void Awake()
-    {
-        anim = GetComponent<Animator>();
-    }
-
-    public virtual void UpdateConnection()
-    {
-        return;
-    }
-
-    public virtual void ActivateConnections()
-    {
-        anim.SetBool("RoomCleared", true);
-    }
+    protected virtual void Awake() => anim = GetComponent<Animator>();
+    public virtual void UpdateConnection() { }
+    public virtual void ActivateConnections() => anim.SetBool("RoomCleared", true);
 }

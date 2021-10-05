@@ -3669,7 +3669,7 @@ GameObject:
   - component: {fileID: 1877882387065798431}
   - component: {fileID: 913111617}
   m_Layer: 0
-  m_Name: SandroIsland
+  m_Name: Island
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -6420,7 +6420,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 5628792983420893859}
   m_LocalRotation: {x: 0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 11.830296, y: 1.3967041, z: -0.0000004959106}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children: []
   m_Father: {fileID: 1877882387065798431}
