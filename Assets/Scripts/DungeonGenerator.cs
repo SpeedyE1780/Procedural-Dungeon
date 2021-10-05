@@ -85,6 +85,8 @@ public class DungeonGenerator : MonoBehaviour
         ConnectionSide? referenceSide = null;
         Vector3 referencePosition = Vector3.zero;
 
+        UIManager.Instance.ShowStats();
+
         while (availableCoordinates.Count() != 0)
         {
             doorRestrictions.Clear(); //Empty door restrictions for the current coordinate
@@ -125,11 +127,11 @@ public class DungeonGenerator : MonoBehaviour
         }
 
         Debug.Log($"Generating Rooms End: {System.DateTime.Now}");
-        SetStats();
 
         DungeonNavMesh.BuildNavMesh();
         EventManager.meshCalculated?.Invoke();
         TurnOnCurrentFloor(0);
+        UIManager.Instance.HideStats();
         yield return null;
     }
 
@@ -289,6 +291,6 @@ public class DungeonGenerator : MonoBehaviour
     void SetStats()
     {
         string stats = $"Generated Rooms: {generatedRooms.Count}\n Available Coordinates: {availableCoordinates.Count()}";
-        UIManager.Instance.SetStats(stats);
+        UIManager.Instance.UpdateStats(stats);
     }
 }

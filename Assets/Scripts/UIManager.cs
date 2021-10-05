@@ -1,10 +1,12 @@
-﻿using System.Collections;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 
 public class UIManager : MonoBehaviour
 {
+    private const float RoomPixelSize = 150f;
+
+    public GameObject GameUI;
     public Text StatsText;
     public RectTransform Map;
     public MapRoom MapRooms;
@@ -12,7 +14,7 @@ public class UIManager : MonoBehaviour
     private static UIManager _instance;
     public static UIManager Instance => _instance;
 
-    Dictionary<int, Transform> mapLevel;
+    Dictionary<int, Transform> mapFloor;
 
     private void Awake()
     {
@@ -21,7 +23,7 @@ public class UIManager : MonoBehaviour
         else
             Destroy(this.gameObject);
 
-        mapLevel = new Dictionary<int, Transform>();
+        mapFloor = new Dictionary<int, Transform>();
     }
 
     private void OnEnable()
@@ -36,26 +38,36 @@ public class UIManager : MonoBehaviour
         EventManager.updateFloor -= TurnOnCurrentFloor;
     }
 
-    void AddRoom(Vector3 coordinate, List<ConnectionSide> sides)
+    public void ShowStats()
     {
-        if (!mapLevel.ContainsKey((int)coordinate.y))
-        {
-            mapLevel.Add((int)coordinate.y, CreateFloorParent((int)coordinate.y));
-        }
-
-        MapRoom current = Instantiate(MapRooms, mapLevel[(int)coordinate.y]);
-        current.SetRoom(coordinate, sides, Map);
+        StatsText.gameObject.SetActive(true);
+        GameUI.SetActive(false);
     }
 
-    public void SetStats(string stats)
+    public void HideStats()
     {
-        StatsText.text = stats;
+        StatsText.gameObject.SetActive(false);
+        GameUI.SetActive(true);
+    }
+
+    public void UpdateStats(string stats) => StatsText.text = stats;
+
+    void AddRoom(Vector3 coordinate, List<ConnectionSide> sides)
+    {
+        if (!mapFloor.ContainsKey((int)coordinate.y))
+            mapFloor.Add((int)coordinate.y, CreateFloorParent((int)coordinate.y));
+
+        MapRoom current = Instantiate(MapRooms, mapFloor[(int)coordinate.y]);
+        current.SetRoom(coordinate, sides, Map);
     }
 
     RectTransform CreateFloorParent(int floor)
     {
+        //Create new parent and set it active if it's the starting floor
         GameObject gameObject = new GameObject($"Floor: {floor}");
         gameObject.SetActive(floor == 0);
+
+        //Set rect parent, position & scale
         RectTransform rect = gameObject.AddComponent<RectTransform>();
         rect.SetParent(Map);
         rect.anchoredPosition = Vector3.zero;
@@ -63,16 +75,20 @@ public class UIManager : MonoBehaviour
         return rect;
     }
 
-    public void MoveMap(Vector3 movement, float angleZ)
-    {
-        Vector2 offset = new Vector2(movement.x / 53, movement.z / 48) * 150;
-        Map.anchoredPosition = -offset;
-        Map.transform.parent.rotation = Quaternion.Euler(0, 0, angleZ);
-    }
-
     void TurnOnCurrentFloor(int floor)
     {
-        foreach (int floorLevel in mapLevel.Keys)
-            mapLevel[floorLevel].gameObject.SetActive(floor == floorLevel);
+        foreach (int floorLevel in mapFloor.Keys)
+            mapFloor[floorLevel].gameObject.SetActive(floor == floorLevel);
+    }
+
+    public void MoveMap(Vector3 movement, float angleZ)
+    {
+        //Move map by the player offset
+        //Divide x and z to convert to pixel coordinates
+        Vector2 offset = new Vector2(movement.x / 53, movement.z / 48) * RoomPixelSize;
+        Debug.Log($"M:{movement} - O:{offset / RoomPixelSize}");
+
+        //Set map rotation to the player's rotation
+        Map.transform.parent.rotation = Quaternion.Euler(0, 0, angleZ);
     }
 }
