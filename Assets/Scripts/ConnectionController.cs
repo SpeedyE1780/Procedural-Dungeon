@@ -21,15 +21,3 @@ public class ConnectionController : MonoBehaviour
         anim.SetBool("RoomCleared", true);
     }
 }
-
-public enum ConnectionSide
-{
-    Forward,
-    Backward,
-    Left,
-    Right,
-    Up,
-    Down
-    //PortalIn,
-    //PortalOut
-}
