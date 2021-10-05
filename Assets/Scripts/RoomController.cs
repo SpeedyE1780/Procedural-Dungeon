@@ -18,7 +18,7 @@ public class RoomController : MonoBehaviour
 
     public int GetRoomExits => numberOfConnections;
     public List<Vector3> GetAdjacentCoordinate => adjacentCoordinate;
-    public Vector3 GetCoordinate => RoomCoordinate.NodeCoordinate;
+    public Vector3 GetCoordinate => RoomCoordinate.nodeCoordinate;
 
     Dictionary<ConnectionSide, ConnectionController> roomConnections;
     Dictionary<Vector3, ConnectionSide> adjacentRestriction;
@@ -108,7 +108,7 @@ public class RoomController : MonoBehaviour
 
         SetPosition(connectionSide, connectionPosition);
 
-        EventManager.addRoom.Invoke(node.NodeCoordinate, roomConnections.Keys.ToList());
+        EventManager.addRoom.Invoke(node.nodeCoordinate, roomConnections.Keys.ToList());
     }
 
     void SetCoordinate(Node coordinate)

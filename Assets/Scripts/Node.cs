@@ -6,37 +6,31 @@ using UnityEngine;
 [Serializable]
 public class Node : IEquatable<Node>
 {
-    public Vector3 NodeCoordinate;
-    //public Dimension Dimension;
-
+    public Vector3 nodeCoordinate;
     Dictionary<ConnectionSide, Vector3> adjacentCoordinates;
 
     public List<Vector3> GetAdjacents => adjacentCoordinates.Values.ToList();
 
     public Node(Vector3 coordinate)
     {
-        NodeCoordinate = coordinate;
-        //Dimension = (Dimension)coordinate.w;
-        SetAdjacent();
+        nodeCoordinate = coordinate;
+        SetAdjacentCoordinates();
     }
 
-    public void SetAdjacent()
+    public void SetAdjacentCoordinates()
     {
         adjacentCoordinates = new Dictionary<ConnectionSide, Vector3>
         {
-            { ConnectionSide.Forward, NodeCoordinate + Vector3.forward },
-            { ConnectionSide.Backward,  NodeCoordinate + Vector3.back},
-            { ConnectionSide.Left, NodeCoordinate + Vector3.left },
-            { ConnectionSide.Right, NodeCoordinate + Vector3.right },
-            { ConnectionSide.Up, NodeCoordinate + Vector3.up },
-            { ConnectionSide.Down, NodeCoordinate + Vector3.down }
+            { ConnectionSide.Forward, nodeCoordinate + Vector3.forward },
+            { ConnectionSide.Backward,  nodeCoordinate + Vector3.back},
+            { ConnectionSide.Left, nodeCoordinate + Vector3.left },
+            { ConnectionSide.Right, nodeCoordinate + Vector3.right },
+            { ConnectionSide.Up, nodeCoordinate + Vector3.up },
+            { ConnectionSide.Down, nodeCoordinate + Vector3.down }
         };
     }
 
     public Vector3 GetAdjacent(ConnectionSide side) => adjacentCoordinates[side];
-
-    public bool Equals(Node otherNode) => NodeCoordinate == otherNode.NodeCoordinate;
-
-
-    public override string ToString() => $"X:{NodeCoordinate.x} , Y:{NodeCoordinate.y} , Z:{NodeCoordinate.z}";
+    public bool Equals(Node otherNode) => nodeCoordinate == otherNode.nodeCoordinate;
+    public override string ToString() => $"X:{nodeCoordinate.x} , Y:{nodeCoordinate.y} , Z:{nodeCoordinate.z}";
 }

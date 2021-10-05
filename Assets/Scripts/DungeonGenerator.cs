@@ -141,7 +141,7 @@ public class DungeonGenerator : MonoBehaviour
             //Get restriction of the current room
             if (generatedRooms.ContainsKey(adjacent))
             {
-                ConnectionSide restriction = generatedRooms[adjacent].GetAdjacentRestriction(currentNode.NodeCoordinate, out bool isDoorRestriction);
+                ConnectionSide restriction = generatedRooms[adjacent].GetAdjacentRestriction(currentNode.nodeCoordinate, out bool isDoorRestriction);
 
                 //Add door restriction if availabe
                 if (isDoorRestriction)
@@ -246,10 +246,10 @@ public class DungeonGenerator : MonoBehaviour
             controller.AddConnectedRoom(currentRoom);
 
         //Add the room to the dictionary
-        Vector3 coordinate = currentNode.NodeCoordinate;
+        Vector3 coordinate = currentNode.nodeCoordinate;
         generatedRooms.Add(coordinate, currentRoom);
 
-        int currentFloor = (int)currentNode.NodeCoordinate.y;
+        int currentFloor = (int)currentNode.nodeCoordinate.y;
 
         if (!roomsParent.ContainsKey(currentFloor))
         {
