@@ -9,7 +9,7 @@ public class Node : IEquatable<Node>
     public Vector3 nodeCoordinate;
     Dictionary<ConnectionSide, Vector3> adjacentCoordinates;
 
-    public List<Vector3> GetAdjacents => adjacentCoordinates.Values.ToList();
+    public List<Vector3> GetAdjacentCoordinates => adjacentCoordinates.Values.ToList();
 
     public Node(Vector3 coordinate)
     {
@@ -30,7 +30,7 @@ public class Node : IEquatable<Node>
         };
     }
 
-    public Vector3 GetAdjacent(ConnectionSide side) => adjacentCoordinates[side];
+    public Vector3 GetAdjacentCoordinate(ConnectionSide side) => adjacentCoordinates[side];
     public bool Equals(Node otherNode) => nodeCoordinate == otherNode.nodeCoordinate;
     public override string ToString() => $"X:{nodeCoordinate.x} , Y:{nodeCoordinate.y} , Z:{nodeCoordinate.z}";
 }

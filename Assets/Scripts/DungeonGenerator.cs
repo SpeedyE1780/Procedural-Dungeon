@@ -112,9 +112,7 @@ public class DungeonGenerator : MonoBehaviour
             }
 
             SetUpNewRoom(ref currentRoom, connectedRooms, currentCoordinate, referenceSide, referencePosition);
-
             GetNextCoordinate(currentRoom);
-
             SetStats();
 
             if (FrameByFrame)
@@ -138,7 +136,7 @@ public class DungeonGenerator : MonoBehaviour
     void GetCurrentRestrictions(Node currentNode, List<ConnectionSide> doorRestrictions, List<ConnectionSide> wallRestrictions,
         List<RoomController> connectedRooms, ref ConnectionSide? referenceSide, ref Vector3 referencePosition)
     {
-        foreach (Vector3 adjacent in currentNode.GetAdjacents)
+        foreach (Vector3 adjacent in currentNode.GetAdjacentCoordinates)
         {
             //Get restriction of the current room
             if (generatedRooms.ContainsKey(adjacent))
@@ -201,7 +199,7 @@ public class DungeonGenerator : MonoBehaviour
             //Create Dead Ends
             if (keepDeadEnds)
             {
-                if (acceptableRooms[i].GetRoomExits > minDoorCount)
+                if (acceptableRooms[i].NumberOfConnections > minDoorCount)
                     acceptableRooms.RemoveAt(i);
                 else
                     i++;
@@ -210,7 +208,7 @@ public class DungeonGenerator : MonoBehaviour
             //Create Room that leads to another room
             else
             {
-                if (restrictionCount < roomType.Keys.Count && acceptableRooms[i].GetRoomExits <= minDoorCount)
+                if (restrictionCount < roomType.Keys.Count && acceptableRooms[i].NumberOfConnections <= minDoorCount)
                     acceptableRooms.RemoveAt(i);
                 else
                     i++;
@@ -229,10 +227,7 @@ public class DungeonGenerator : MonoBehaviour
             if (possibleRooms == null)
                 randomRoom = Rooms[Random.Range(0, Rooms.Count)];
             else
-            {
-                Debug.LogError("No Available Rooms");
-                return null;
-            }
+                throw new System.Exception("No Available Rooms");
         }
 
         return randomRoom;
