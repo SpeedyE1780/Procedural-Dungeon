@@ -30,9 +30,9 @@ public class PortalController : ConnectionController
     public void SetNextPosition(Transform portal) => targetPosition = portal.position;
 
     //Update floor and return position
-    public Vector3 GetTargetPosition(ref int floor)
+    public int TeleportPlayer(Transform player)
     {
-        floor += floorIncrement;
-        return targetPosition;
+        player.position = targetPosition;
+        return floorIncrement;
     }
 }

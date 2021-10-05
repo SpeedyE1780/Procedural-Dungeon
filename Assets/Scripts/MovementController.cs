@@ -19,6 +19,9 @@ public class MovementController : MonoBehaviour
         xRotation = 0;
         currentFloor = 0;
         rb = GetComponent<Rigidbody>();
+        enabled = false;
+
+        //Enable movement after dungeon is generated
         EventManager.meshCalculated += () =>
         {
             enabled = true;
@@ -30,25 +33,35 @@ public class MovementController : MonoBehaviour
                 Cursor.visible = false;
             }
         };
-        enabled = false;
     }
 
-    // Update is called once per frame
     void FixedUpdate()
     {
-        Vector3 movement = (Input.GetAxis("Horizontal") * transform.right + Input.GetAxis("Vertical") * transform.forward) * movementSpeed * Time.deltaTime;
+        Move();
+        Rotate();
+        UIManager.Instance.MoveMap(transform.position, transform.rotation.eulerAngles.y);
+    }
+
+    private void Move()
+    {
+        Vector3 movement = movementSpeed * Time.deltaTime * (Input.GetAxis("Horizontal") * transform.right + Input.GetAxis("Vertical") * transform.forward);
+        transform.position += movement;
+    }
+
+    private void Rotate()
+    {
         float angleY = Input.GetAxis("Mouse X") * rotationSpeed * Time.deltaTime;
         float angleX = Input.GetAxis("Mouse Y") * rotationSpeed * Time.deltaTime;
 
-        transform.position += movement;
+        //Rotate left-right
         transform.localRotation *= Quaternion.Euler(0, angleY, 0);
 
+        //Rotate up-down
         xRotation = Mathf.Clamp(xRotation - angleX, -MaxRotation, MaxRotation);
         transform.GetChild(0).localRotation = Quaternion.Euler(xRotation, 0, 0);
 
+        //Rotate map icon
         MapIcon.forward = Quaternion.Euler(0, 0, angleY) * MapIcon.forward;
-
-        UIManager.Instance.MoveMap(transform.position, transform.rotation.eulerAngles.y);
     }
 
     private void OnTriggerEnter(Collider other)
@@ -63,12 +76,10 @@ public class MovementController : MonoBehaviour
         {
             if (Input.GetKeyDown(KeyCode.E))
             {
-                Vector3 destination = other.GetComponentInParent<PortalController>().GetTargetPosition(ref currentFloor);
-                Vector3 offset = destination - transform.position;
-                transform.position = destination;
+                //Returns wether player moved one floor up or down
+                currentFloor += other.GetComponentInParent<PortalController>().TeleportPlayer(transform);
 
-                UIManager.Instance.MoveMap(offset, 0);
-
+                UIManager.Instance.MoveMap(transform.position, transform.rotation.eulerAngles.y);
                 EventManager.updateFloor(currentFloor);
             }
         }
