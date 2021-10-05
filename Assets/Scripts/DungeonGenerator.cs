@@ -6,8 +6,8 @@ using UnityEngine.AI;
 
 public class DungeonGenerator : MonoBehaviour
 {
-    public RoomController ReferenceRoom;
-    public Transform AllRoomsParent;
+    public RoomController ReferenceRoom; //Room with all connections available
+    public Transform AllRoomsParent; //Store instantiated room variations
     public Transform DungeonParent;
     public NavMeshSurface DungeonNavMesh;
     public List<RoomController> Rooms; //All rooms available to place
@@ -19,22 +19,11 @@ public class DungeonGenerator : MonoBehaviour
     NodeList availableCoordinates;
     Dictionary<Vector3, RoomController> generatedRooms;
     Dictionary<int, Transform> roomsParent;
-    Dictionary<ConnectionSide, List<RoomController>> roomType; //List of all rooms containing the same key exit
+    Dictionary<ConnectionSide, List<RoomController>> roomType; //List of all rooms containing the key
 
-    private void Awake()
-    {
-        GetCombination();
-    }
-
-    private void OnEnable()
-    {
-        EventManager.updateFloor += TurnOnCurrentFloor;
-    }
-
-    private void OnDisable()
-    {
-        EventManager.updateFloor -= TurnOnCurrentFloor;
-    }
+    private void Awake() => GetCombination();
+    private void OnEnable() => EventManager.updateFloor += TurnOnCurrentFloor;
+    private void OnDisable() => EventManager.updateFloor -= TurnOnCurrentFloor;
 
     void GetCombination()
     {
@@ -85,7 +74,7 @@ public class DungeonGenerator : MonoBehaviour
         //Add the starting coordinate
         Node startCoordinate = new Node(Vector3.zero);
         availableCoordinates = new NodeList(BFSExpansion);
-        availableCoordinates.AddNode(startCoordinate);
+        availableCoordinates.Add(startCoordinate);
 
         List<ConnectionSide> doorRestrictions = new List<ConnectionSide>(); //Doors that need to be available when building the room
         List<ConnectionSide> wallRestrictions = new List<ConnectionSide>(); //Walls that need to be available when building the room
@@ -96,7 +85,7 @@ public class DungeonGenerator : MonoBehaviour
         ConnectionSide? referenceSide = null;
         Vector3 referencePosition = Vector3.zero;
 
-        while (availableCoordinates.Count != 0)
+        while (availableCoordinates.Count() != 0)
         {
             doorRestrictions.Clear(); //Empty door restrictions for the current coordinate
             wallRestrictions.Clear(); //Empty wall restrictions for the current coordinate
@@ -129,16 +118,10 @@ public class DungeonGenerator : MonoBehaviour
             if (FrameByFrame)
             {
                 if (WaitForKeyPress)
-                {
                     yield return new WaitUntil(() => Input.GetKeyDown(KeyCode.Space));
-
-                }
 
                 yield return null;
             }
-
-            if (generatedRooms.Count == NumberOfRooms && !BFSExpansion)
-                yield return new WaitUntil(() => Input.GetKeyDown(KeyCode.Space));
         }
 
         Debug.Log($"Generating Rooms End: {System.DateTime.Now}");
@@ -177,23 +160,13 @@ public class DungeonGenerator : MonoBehaviour
                 }
             }
         }
-
-        if (currentNode.NodeCoordinate.y > 1)
-        {
-            wallRestrictions.Add(ConnectionSide.Up);
-        }
-
-        if (currentNode.NodeCoordinate.y < -1)
-        {
-            wallRestrictions.Add(ConnectionSide.Down);
-        }
     }
 
     List<RoomController> FilterRooms(List<ConnectionSide> doorRestrictions, List<ConnectionSide> wallRestrictions)
     {
         List<RoomController> acceptableRooms = new List<RoomController>(Rooms);
 
-        bool deadEnds = BFSExpansion ? generatedRooms.Count + availableCoordinates.Count >= NumberOfRooms : generatedRooms.Count >= NumberOfRooms;
+        bool deadEnds = BFSExpansion ? generatedRooms.Count + availableCoordinates.Count() >= NumberOfRooms : generatedRooms.Count >= NumberOfRooms;
 
         FilterRestrictions(ref acceptableRooms, doorRestrictions, wallRestrictions);
         FilterDeadEnds(ref acceptableRooms, deadEnds,
@@ -296,17 +269,14 @@ public class DungeonGenerator : MonoBehaviour
         {
             Node node = new Node(coordinate);
             if (!generatedRooms.ContainsKey(coordinate) && !availableCoordinates.Contains(node))
-                availableCoordinates.AddNode(node);
+                availableCoordinates.Add(node);
         }
     }
 
     void TurnOnCurrentFloor(int floor)
     {
-
         foreach (KeyValuePair<int, Transform> kvp in roomsParent)
-        {
             kvp.Value.gameObject.SetActive(kvp.Key == floor);
-        }
     }
 
     Transform CreateFloorParent(int floor)
@@ -318,7 +288,7 @@ public class DungeonGenerator : MonoBehaviour
 
     void SetStats()
     {
-        string stats = $"Generated Rooms: {generatedRooms.Count}\n Available Coordinates: {availableCoordinates.Count}\n Disconnected Connections: {ConnectionCheck.GetDisconnected}";
+        string stats = $"Generated Rooms: {generatedRooms.Count}\n Available Coordinates: {availableCoordinates.Count}";
         UIManager.Instance.SetStats(stats);
     }
 }
