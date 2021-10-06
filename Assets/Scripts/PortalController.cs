@@ -20,6 +20,7 @@ public class PortalController : ConnectionController
             base.ActivateConnections();
     }
 
+    //Play open animation
     public override void ActivateConnections()
     {
         isActive = true;
@@ -29,7 +30,7 @@ public class PortalController : ConnectionController
     //Set portal target position
     public void SetNextPosition(Transform portal) => targetPosition = portal.position;
 
-    //Update floor and return position
+    //Teleport player and return wether we moved up or down a floor
     public int TeleportPlayer(Transform player)
     {
         player.position = targetPosition;
