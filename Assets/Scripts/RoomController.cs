@@ -9,7 +9,7 @@ public class RoomController : MonoBehaviour
 {
     public Text CoordinateText;
     public Transform Connections;
-    public Node RoomCoordinate;
+    public Node roomNode;
     public GameObject Bridges;
     public Transform Waypoints;
     public bool spawnEnemy;
@@ -24,7 +24,7 @@ public class RoomController : MonoBehaviour
 
     public int NumberOfConnections { get; private set; }
     public List<Vector3> GetAdjacentCoordinate => adjacentCoordinate;
-    public Vector3 GetCoordinate => RoomCoordinate.nodeCoordinate;
+    public Vector3 GetCoordinate => roomNode.nodeCoordinate;
 
     private void OnEnable() => EventManager.meshCalculated += ActivateRoom;
     private void OnDisable() => EventManager.meshCalculated -= ActivateRoom;
@@ -77,26 +77,26 @@ public class RoomController : MonoBehaviour
         adjacentCoordinate = new List<Vector3>();
         this.connectedRooms = connectedRooms;
         NumberOfConnections = 0;
-        SetCoordinate(node);
+        SetNode(node);
         SetWaypoints();
         SetConnections();
         SetPosition(connectionSide, connectionPosition);
         EventManager.addRoom.Invoke(node.nodeCoordinate, roomConnections.Keys.ToList());
     }
 
-    private void SetCoordinate(Node coordinate)
+    private void SetNode(Node node)
     {
-        RoomCoordinate = coordinate;
-        CoordinateText.text = RoomCoordinate.ToString();
+        roomNode = node;
+        CoordinateText.text = roomNode.ToString();
 
         adjacentRestriction = new Dictionary<Vector3, ConnectionSide>
         {
-            { RoomCoordinate.GetAdjacentCoordinate(ConnectionSide.Forward), ConnectionSide.Backward },
-            { RoomCoordinate.GetAdjacentCoordinate(ConnectionSide.Backward), ConnectionSide.Forward },
-            { RoomCoordinate.GetAdjacentCoordinate(ConnectionSide.Left), ConnectionSide.Right },
-            { RoomCoordinate.GetAdjacentCoordinate(ConnectionSide.Right), ConnectionSide.Left },
-            { RoomCoordinate.GetAdjacentCoordinate(ConnectionSide.Up), ConnectionSide.Down },
-            { RoomCoordinate.GetAdjacentCoordinate(ConnectionSide.Down), ConnectionSide.Up }
+            { roomNode.GetAdjacentCoordinate(ConnectionSide.Forward), ConnectionSide.Backward },
+            { roomNode.GetAdjacentCoordinate(ConnectionSide.Backward), ConnectionSide.Forward },
+            { roomNode.GetAdjacentCoordinate(ConnectionSide.Left), ConnectionSide.Right },
+            { roomNode.GetAdjacentCoordinate(ConnectionSide.Right), ConnectionSide.Left },
+            { roomNode.GetAdjacentCoordinate(ConnectionSide.Up), ConnectionSide.Down },
+            { roomNode.GetAdjacentCoordinate(ConnectionSide.Down), ConnectionSide.Up }
         };
     }
 
@@ -119,7 +119,7 @@ public class RoomController : MonoBehaviour
             {
                 NumberOfConnections++;
                 roomConnections.Add(currentSide, controller);
-                adjacentCoordinate.Add(RoomCoordinate.GetAdjacentCoordinate(currentSide));
+                adjacentCoordinate.Add(roomNode.GetAdjacentCoordinate(currentSide));
             }
             else
             {
@@ -168,7 +168,7 @@ public class RoomController : MonoBehaviour
         return roomConnections[referenceSide].transform.position;
     }
 
-    ConnectionSide FlipSide(ConnectionSide side)
+    private ConnectionSide FlipSide(ConnectionSide side)
     {
         ConnectionSide referenceSide;
         switch (side)
