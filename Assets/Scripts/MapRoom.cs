@@ -1,10 +1,11 @@
-﻿using System;
-using System.Collections;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using UnityEngine;
 
 public class MapRoom : MonoBehaviour
 {
+    private const float PixelThreshold = 75f;
+    private const float RoomSize = 150f;
+
     RectTransform rect;
     RectTransform parentRect;
     public Transform ConnectionParents;
@@ -14,8 +15,12 @@ public class MapRoom : MonoBehaviour
     {
         rect = GetComponent<RectTransform>();
         parentRect = parent;
-        rect.anchoredPosition = (coordinate.x * Vector2.right + coordinate.z * Vector2.up) * 150;
+        rect.anchoredPosition = (coordinate.x * Vector2.right + coordinate.z * Vector2.up) * RoomSize;
+        ShowConnections(sides);
+    }
 
+    private void ShowConnections(List<ConnectionSide> sides)
+    {
         foreach (Transform child in ConnectionParents)
         {
             ConnectionSide side = child.GetComponent<ConnectionController>().connectionSide;
@@ -25,15 +30,13 @@ public class MapRoom : MonoBehaviour
         }
     }
 
+    //Wait unitl player is close enough to enable room image
     private void Update()
     {
-        if (gameObject.activeInHierarchy && !RoomImage.activeSelf)
+        if ((rect.anchoredPosition + parentRect.anchoredPosition).magnitude < PixelThreshold)
         {
-            if ((rect.anchoredPosition + parentRect.anchoredPosition).magnitude < 75)
-            {
-                RoomImage.SetActive(true);
-                this.enabled = false;
-            }
+            RoomImage.SetActive(true);
+            enabled = false;
         }
     }
 }

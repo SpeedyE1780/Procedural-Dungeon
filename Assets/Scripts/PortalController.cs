@@ -1,47 +1,39 @@
-﻿using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
+﻿using UnityEngine;
 
 public class PortalController : ConnectionController
 {
-    Transform nextPortal;
-    public Vector3 GetNextPosition => nextPortal.position;
+    Vector3 targetPosition;
     bool isActive;
+    int floorIncrement;
 
-    private void Awake()
+    protected override void Awake()
     {
-        anim = GetComponent<Animator>();
-        EventManager.meshCalculated += () =>
-        {
-            if (nextPortal == null || nextPortal == transform.GetChild(0))
-            {
-                Debug.LogError("Portal Not connected");
-            }
-        };
-
+        base.Awake();
         isActive = false;
+        floorIncrement = connectionSide == ConnectionSide.Up ? 1 : -1;
     }
 
+    //Play open animation again
     private void OnEnable()
     {
         if (isActive)
             base.ActivateConnections();
     }
 
+    //Play open animation
     public override void ActivateConnections()
     {
         isActive = true;
         base.ActivateConnections();
     }
 
-    public void SetNextPosition(Transform portal)
-    {
-        nextPortal = portal;
-    }
+    //Set portal target position
+    public void SetNextPosition(Transform portal) => targetPosition = portal.position;
 
-    public Vector3 TeleportPlayer(ref int floor)
+    //Teleport player and return wether we moved up or down a floor
+    public int TeleportPlayer(Transform player)
     {
-        floor += connectionSide == ConnectionSide.Up ? 1 : -1;
-        return nextPortal.position;
+        player.position = targetPosition;
+        return floorIncrement;
     }
 }

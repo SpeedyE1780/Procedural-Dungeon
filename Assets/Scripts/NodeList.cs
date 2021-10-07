@@ -1,46 +1,37 @@
 ﻿using System.Collections.Generic;
-using UnityEngine.Events;
 
 public class NodeList
 {
     readonly Queue<Node> nodeQueue;
     readonly Stack<Node> nodeStack;
-    readonly bool BFS;
 
     public delegate Node ReturnNode();
+    public delegate void AddNode(Node node);
+    public delegate bool ContainsNode(Node node);
+    public delegate int NodeCount();
     public ReturnNode GetNode;
-
-    public int Count => BFS ? nodeQueue.Count : nodeStack.Count;
+    public AddNode Add;
+    public ContainsNode Contains;
+    public NodeCount Count;
 
     public NodeList(bool isBFS)
     {
-        BFS = isBFS;
-
+        //If breadth first search use queue else use stack
         if (isBFS)
         {
             nodeQueue = new Queue<Node>();
             GetNode = nodeQueue.Dequeue;
+            Add = nodeQueue.Enqueue;
+            Contains = nodeQueue.Contains;
+            Count = () => nodeQueue.Count;
         }
         else
         {
             nodeStack = new Stack<Node>();
             GetNode = nodeStack.Pop;
+            Add = nodeStack.Push;
+            Contains = nodeStack.Contains;
+            Count = () => nodeStack.Count;
         }
-    }
-
-    public void AddNode(Node node)
-    {
-        if (BFS)
-            nodeQueue.Enqueue(node);
-        else
-            nodeStack.Push(node);
-    }
-
-    public bool Contains(Node node)
-    {
-        if (BFS)
-            return nodeQueue.Contains(node);
-        else
-            return nodeStack.Contains(node);
     }
 }

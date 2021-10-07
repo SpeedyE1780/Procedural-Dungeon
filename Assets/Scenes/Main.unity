@@ -924,7 +924,7 @@ MonoBehaviour:
   DungeonParent: {fileID: 318731978}
   DungeonNavMesh: {fileID: 318731979}
   Rooms: []
-  NumberOfRooms: 250
+  NumberOfRooms: 1000
   BFSExpansion: 1
   FrameByFrame: 1
   WaitForKeyPress: 0
@@ -940,6 +940,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 603136df801d77b42a3185efb598a04b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  GameUI: {fileID: 817031640}
   StatsText: {fileID: 198431645}
   Map: {fileID: 117331991}
   MapRooms: {fileID: 1475450572585846379, guid: 2ba4106b1c5568d45a6a296fa69e99c4,
