@@ -71,7 +71,7 @@ public class RoomController : MonoBehaviour
 
     #endregion
 
-    public void InitializeRoom(Node node, ConnectionSide? connectionSide, Vector3 connectionPosition, List<RoomController> connectedRooms)
+    public void InitializeRoom(Node node, ConnectionSide connectionSide, Vector3 connectionPosition, List<RoomController> connectedRooms)
     {
         roomConnections = new Dictionary<ConnectionSide, ConnectionController>();
         adjacentCoordinate = new List<Vector3>();
@@ -128,14 +128,14 @@ public class RoomController : MonoBehaviour
         }
     }
 
-    private void SetPosition(ConnectionSide? connectionSide, Vector3 connectionPosition)
+    private void SetPosition(ConnectionSide connectionSide, Vector3 connectionPosition)
     {
         //True means this is the starting room
         //False connect based on the connected room
-        if (!connectionSide.HasValue)
+        if (connectedRooms.Count == 0)
             transform.position = Vector3.zero;
         else
-            transform.position = connectionPosition - roomConnections[connectionSide.Value].transform.localPosition;
+            transform.position = connectionPosition - roomConnections[connectionSide].transform.localPosition;
     }
 
     public void AddConnectedRoom(RoomController room)

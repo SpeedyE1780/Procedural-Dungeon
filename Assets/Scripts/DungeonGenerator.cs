@@ -16,27 +16,63 @@ public class DungeonGenerator : MonoBehaviour
     public bool FrameByFrame;
     public bool WaitForKeyPress;
 
-    NodeList availableCoordinates;
-    Dictionary<Vector3, RoomController> generatedRooms;
-    Dictionary<int, Transform> roomsParent;
-    Dictionary<ConnectionSide, List<RoomController>> roomType; //List of all rooms containing the key
+    private NodeList availableCoordinates;
+    private Dictionary<Vector3, RoomController> generatedRooms;
+    private Dictionary<int, Transform> roomsParent;
+    private Dictionary<ConnectionSide, List<RoomController>> roomType; //List of all rooms containing the key
 
-    private void Awake() => GetCombination();
+    private class RestrictionsData
+    {
+        private List<ConnectionSide> doorRestrictions; //Sides that need to have doors
+        private List<ConnectionSide> wallRestrictions; //Sides that need to have walls
+
+        public bool HasRestrictions => doorRestrictions.Count + wallRestrictions.Count > 0;
+        public int DoorCount => doorRestrictions.Count;
+        public int WallCount => wallRestrictions.Count;
+        public int TotalCount => doorRestrictions.Count + wallRestrictions.Count;
+
+        public RestrictionsData()
+        {
+            doorRestrictions = new List<ConnectionSide>();
+            wallRestrictions = new List<ConnectionSide>();
+        }
+
+        public void AddDoorRestriction(ConnectionSide side) => doorRestrictions.Add(side);
+        public void AddWallRestriction(ConnectionSide side) => wallRestrictions.Add(side);
+        public ConnectionSide GetDoorRestriction(int index) => doorRestrictions[index];
+        public ConnectionSide GetWallRestriction(int index) => wallRestrictions[index];
+
+        public void ClearRestrictions()
+        {
+            doorRestrictions.Clear();
+            wallRestrictions.Clear();
+        }
+    }
+
+    private class ReferenceData
+    {
+        public ConnectionSide side;
+        public Vector3 position;
+    }
+
+    private void Awake() => GetCombinations();
     private void OnEnable() => EventManager.updateFloor += TurnOnCurrentFloor;
     private void OnDisable() => EventManager.updateFloor -= TurnOnCurrentFloor;
 
-    void GetCombination()
+    //Loop through all possible combinations and instantiate a room
+    private void GetCombinations()
     {
         List<int> connections = System.Enum.GetValues(typeof(ConnectionSide)).Cast<int>().ToList();
         roomType = new Dictionary<ConnectionSide, List<RoomController>>();
         Rooms = new List<RoomController>();
+        List<ConnectionSide> roomSides = new List<ConnectionSide>();
+        double count = Mathf.Pow(2, connections.Count);
 
-        double count = System.Math.Pow(2, connections.Count);
         for (int i = 1; i <= count - 1; i++)
         {
             string str = System.Convert.ToString(i, 2).PadLeft(connections.Count, '0');
 
-            List<ConnectionSide> roomSides = new List<ConnectionSide>();
+            roomSides.Clear();
             RoomController currentRoom = Instantiate(ReferenceRoom, AllRoomsParent);
 
             for (int j = 0; j < str.Length; j++)
@@ -58,16 +94,15 @@ public class DungeonGenerator : MonoBehaviour
         }
     }
 
-    private IEnumerator Start()
+    private void Start()
     {
-        yield return new WaitForSeconds(1);
         generatedRooms = new Dictionary<Vector3, RoomController>();
         roomsParent = new Dictionary<int, Transform>();
 
         StartCoroutine(BuildDungeon());
     }
 
-    IEnumerator BuildDungeon()
+    private IEnumerator BuildDungeon()
     {
         Debug.Log($"Generating Rooms Start: {System.DateTime.Now}");
 
@@ -76,44 +111,37 @@ public class DungeonGenerator : MonoBehaviour
         availableCoordinates = new NodeList(BFSExpansion);
         availableCoordinates.Add(startCoordinate);
 
-        List<ConnectionSide> doorRestrictions = new List<ConnectionSide>(); //Doors that need to be available when building the room
-        List<ConnectionSide> wallRestrictions = new List<ConnectionSide>(); //Walls that need to be available when building the room
-        Node currentCoordinate; //Current Coordinate where placing the room
-        RoomController currentRoom; //Current Room to place
-        List<RoomController> connectedRooms;
-
-        ConnectionSide? referenceSide = null;
-        Vector3 referencePosition = Vector3.zero;
+        RestrictionsData restrictions = new RestrictionsData();
+        ReferenceData referenceData = new ReferenceData();
+        Node currentNode;
+        RoomController currentRoom;
+        List<RoomController> connectedRooms = new List<RoomController>();
 
         UIManager.Instance.ShowStats();
 
         while (availableCoordinates.Count() != 0)
         {
-            doorRestrictions.Clear(); //Empty door restrictions for the current coordinate
-            wallRestrictions.Clear(); //Empty wall restrictions for the current coordinate
+            restrictions.ClearRestrictions();
 
-            //currentCoordinate = availableCoordinates.Dequeue(); //Get next available coordinate
-            currentCoordinate = availableCoordinates.GetNode(); //Get next available coordinate
+            currentNode = availableCoordinates.GetNode();
             connectedRooms = new List<RoomController>();
 
-            GetCurrentRestrictions(currentCoordinate, doorRestrictions, wallRestrictions, connectedRooms, ref referenceSide, ref referencePosition);
+            GetCurrentRestrictions(currentNode, connectedRooms, restrictions, referenceData);
 
             //Select a room that fits the restrictions
-            if (doorRestrictions.Count != 0 || wallRestrictions.Count != 0)
+            if (restrictions.HasRestrictions)
             {
-                List<RoomController> acceptableRooms = FilterRooms(doorRestrictions, wallRestrictions);
-                currentRoom = SelectRandomRoom(acceptableRooms);
+                List<RoomController> acceptableRooms = FilterRooms(restrictions);
+                currentRoom = GetRandomRoom(acceptableRooms);
             }
-
-            //Create a random room
             else
             {
-                currentRoom = SelectRandomRoom();
+                currentRoom = GetRandomRoom();
             }
 
-            SetUpNewRoom(ref currentRoom, connectedRooms, currentCoordinate, referenceSide, referencePosition);
-            GetNextCoordinate(currentRoom);
+            SetUpNewRoom(currentRoom, connectedRooms, currentNode, referenceData);
             SetStats();
+            System.GC.Collect();
 
             if (FrameByFrame)
             {
@@ -133,97 +161,104 @@ public class DungeonGenerator : MonoBehaviour
         yield return null;
     }
 
-    void GetCurrentRestrictions(Node currentNode, List<ConnectionSide> doorRestrictions, List<ConnectionSide> wallRestrictions,
-        List<RoomController> connectedRooms, ref ConnectionSide? referenceSide, ref Vector3 referencePosition)
+    private void GetCurrentRestrictions(Node currentNode, List<RoomController> connectedRooms, RestrictionsData restrictions, ReferenceData referenceData)
     {
         foreach (Vector3 adjacent in currentNode.GetAdjacentCoordinates)
         {
-            //Get restriction of the current room
             if (generatedRooms.ContainsKey(adjacent))
             {
                 ConnectionSide restriction = generatedRooms[adjacent].GetAdjacentRestriction(currentNode.nodeCoordinate, out bool isDoorRestriction);
 
-                //Add door restriction if availabe
                 if (isDoorRestriction)
                 {
-                    doorRestrictions.Add(restriction);
-                    referenceSide = restriction;
-
+                    restrictions.AddDoorRestriction(restriction);
                     connectedRooms.Add(generatedRooms[adjacent]);
-                    referencePosition = generatedRooms[adjacent].GetConnectionPosition(restriction);
-                }
 
-                //Add wall restriction
+                    //Set reference side and position
+                    referenceData.side = restriction;
+                    referenceData.position = generatedRooms[adjacent].GetConnectionPosition(restriction);
+                }
                 else
                 {
-                    wallRestrictions.Add(restriction);
+                    restrictions.AddWallRestriction(restriction);
                 }
             }
         }
     }
 
-    List<RoomController> FilterRooms(List<ConnectionSide> doorRestrictions, List<ConnectionSide> wallRestrictions)
+    private List<RoomController> FilterRooms(RestrictionsData restrictions)
     {
         List<RoomController> acceptableRooms = new List<RoomController>(Rooms);
 
-        bool deadEnds = BFSExpansion ? generatedRooms.Count + availableCoordinates.Count() >= NumberOfRooms : generatedRooms.Count >= NumberOfRooms;
+        bool deadEnds;
 
-        FilterRestrictions(ref acceptableRooms, doorRestrictions, wallRestrictions);
-        FilterDeadEnds(ref acceptableRooms, deadEnds,
-            doorRestrictions.Count, doorRestrictions.Count + wallRestrictions.Count);
+        //True start adding dead ends when the total rooms reach the limit
+        //False wait for the main path to reach the limit then add dead ends
+        if (BFSExpansion)
+            deadEnds = generatedRooms.Count + availableCoordinates.Count() >= NumberOfRooms;
+        else
+            deadEnds = generatedRooms.Count >= NumberOfRooms;
+
+        FilterRestrictions(ref acceptableRooms, restrictions);
+        FilterDeadEnds(ref acceptableRooms, deadEnds, restrictions.DoorCount, restrictions.TotalCount);
+
         return acceptableRooms;
     }
 
-    void FilterRestrictions(ref List<RoomController> acceptableRooms, List<ConnectionSide> doorRestrictions, List<ConnectionSide> wallRestrictions)
+    private void FilterRestrictions(ref List<RoomController> acceptableRooms, RestrictionsData restrictions)
     {
         ConnectionSide currentRestriction;
 
         //Get all the rooms that fits the door restrictions
-        for (int doorRestrictionIndex = 0; doorRestrictionIndex < doorRestrictions.Count; doorRestrictionIndex++)
+        for (int doorRestrictionIndex = 0; doorRestrictionIndex < restrictions.DoorCount; doorRestrictionIndex++)
         {
-            currentRestriction = doorRestrictions[doorRestrictionIndex];
+            currentRestriction = restrictions.GetDoorRestriction(doorRestrictionIndex);
             acceptableRooms = acceptableRooms.Intersect(roomType[currentRestriction]).ToList();
         }
+
         //Get all the rooms that fits the wall restrictions
-        for (int wallRestrictionIndex = 0; wallRestrictionIndex < wallRestrictions.Count; wallRestrictionIndex++)
+        for (int wallRestrictionIndex = 0; wallRestrictionIndex < restrictions.WallCount; wallRestrictionIndex++)
         {
-            currentRestriction = wallRestrictions[wallRestrictionIndex];
+            currentRestriction = restrictions.GetWallRestriction(wallRestrictionIndex);
             acceptableRooms = acceptableRooms.Except(roomType[currentRestriction]).ToList();
         }
     }
 
-    void FilterDeadEnds(ref List<RoomController> acceptableRooms, bool keepDeadEnds, int minDoorCount, int restrictionCount)
+    private void FilterDeadEnds(ref List<RoomController> acceptableRooms, bool keepDeadEnds, int minDoorCount, int restrictionCount)
     {
-        for (int i = 0; i < acceptableRooms.Count;)
-        {
-            //Create Dead Ends
-            if (keepDeadEnds)
-            {
-                if (acceptableRooms[i].NumberOfConnections > minDoorCount)
-                    acceptableRooms.RemoveAt(i);
-                else
-                    i++;
-            }
+        //If all sides restricted no extra filter can be added
+        bool allSidesRestricted = restrictionCount == roomType.Keys.Count;
 
-            //Create Room that leads to another room
-            else
-            {
-                if (restrictionCount < roomType.Keys.Count && acceptableRooms[i].NumberOfConnections <= minDoorCount)
-                    acceptableRooms.RemoveAt(i);
-                else
-                    i++;
-            }
-        }
+        System.Func<int, bool> filterRule;
+
+        if (keepDeadEnds)
+            filterRule = RemoveExtraConnections;
+        else
+            filterRule = RemoveDeadEnds;
+
+        if (allSidesRestricted)
+            return;
+
+        for (int i = acceptableRooms.Count - 1; i >= 0; i--)
+            if (filterRule(acceptableRooms[i].NumberOfConnections))
+                acceptableRooms.RemoveAt(i);
+
+        //Remove room that don't lead to another room
+        bool RemoveDeadEnds(int roomConnections) => roomConnections <= minDoorCount;
+        //Remove room that lead to another room
+        bool RemoveExtraConnections(int roomConnections) => roomConnections > minDoorCount;
     }
 
-    RoomController SelectRandomRoom(List<RoomController> possibleRooms = null)
+    private RoomController GetRandomRoom(List<RoomController> possibleRooms = null)
     {
         RoomController randomRoom;
 
+        //Get random room from possible options
         if (possibleRooms != null && possibleRooms.Count != 0)
             randomRoom = possibleRooms[Random.Range(0, possibleRooms.Count)];
         else
         {
+            //Get starting room from all rooms
             if (possibleRooms == null)
                 randomRoom = Rooms[Random.Range(0, Rooms.Count)];
             else
@@ -233,11 +268,11 @@ public class DungeonGenerator : MonoBehaviour
         return randomRoom;
     }
 
-    void SetUpNewRoom(ref RoomController currentRoom, List<RoomController> connectedRooms, Node currentNode, ConnectionSide? referenceSide, Vector3 referencePosition)
+    private void SetUpNewRoom(RoomController currentRoom, List<RoomController> connectedRooms, Node currentNode, ReferenceData reference)
     {
         //Initialize New Room
         currentRoom = Instantiate(currentRoom);
-        currentRoom.InitializeRoom(currentNode, referenceSide, referencePosition, connectedRooms);
+        currentRoom.InitializeRoom(currentNode, reference.side, reference.position, connectedRooms);
 
         foreach (RoomController controller in connectedRooms)
             controller.AddConnectedRoom(currentRoom);
@@ -249,14 +284,13 @@ public class DungeonGenerator : MonoBehaviour
         int currentFloor = (int)currentNode.nodeCoordinate.y;
 
         if (!roomsParent.ContainsKey(currentFloor))
-        {
             roomsParent.Add(currentFloor, CreateFloorParent(currentFloor));
-        }
 
         currentRoom.transform.SetParent(roomsParent[currentFloor]);
+        GetNextCoordinate(currentRoom);
     }
 
-    void GetNextCoordinate(RoomController currentRoom)
+    private void GetNextCoordinate(RoomController currentRoom)
     {
         //Get the current neighbours
         List<Vector3> adjacentCoordinate = currentRoom.GetAdjacentCoordinate;
@@ -270,20 +304,21 @@ public class DungeonGenerator : MonoBehaviour
         }
     }
 
-    void TurnOnCurrentFloor(int floor)
+    //Only show current floor
+    private void TurnOnCurrentFloor(int floor)
     {
         foreach (KeyValuePair<int, Transform> kvp in roomsParent)
             kvp.Value.gameObject.SetActive(kvp.Key == floor);
     }
 
-    Transform CreateFloorParent(int floor)
+    private Transform CreateFloorParent(int floor)
     {
         GameObject gameObject = new GameObject($"Floor: {floor}");
         gameObject.transform.SetParent(DungeonParent);
         return gameObject.transform;
     }
 
-    void SetStats()
+    private void SetStats()
     {
         string stats = $"Generated Rooms: {generatedRooms.Count}\n Available Coordinates: {availableCoordinates.Count()}";
         UIManager.Instance.UpdateStats(stats);
