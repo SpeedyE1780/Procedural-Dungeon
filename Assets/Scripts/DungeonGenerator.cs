@@ -94,8 +94,12 @@ public class DungeonGenerator : MonoBehaviour
         }
     }
 
-    private void Start()
+    private IEnumerator Start()
     {
+
+        //Wait for room to finish destroying unnecessary connections
+        yield return new WaitForSeconds(1);
+
         generatedRooms = new Dictionary<Vector3, RoomController>();
         roomsParent = new Dictionary<int, Transform>();
 
