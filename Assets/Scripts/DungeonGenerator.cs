@@ -96,7 +96,6 @@ public class DungeonGenerator : MonoBehaviour
 
     private IEnumerator Start()
     {
-
         //Wait for room to finish destroying unnecessary connections
         yield return new WaitForSeconds(1);
 
